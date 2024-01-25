@@ -38,7 +38,7 @@
     "eslint-plugin-playwright": "^0.15.3",
     "eslint-plugin-vue": "^9.16.1",
     "jsdom": "~22.1.0",
-    "nx": "17.3.0-canary.20240125-70fd808",
+    "nx": "patch:nx@npm%3A17.3.0-canary.20240125-70fd808#~/.yarn/patches/nx-npm-17.3.0-canary.20240125-70fd808-4bf176f0e5.patch",
     "prettier": "^2.6.2",
     "sass": "1.62.1",
     "typescript": "~5.2.2",
@@ -49,5 +49,8 @@
   "nx": {
     "includedScripts": []
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.0.2",
+  "resolutions": {
+    "nx@npm:17.3.0-canary.20240125-70fd808": "patch:nx@npm%3A17.3.0-canary.20240125-70fd808#~/.yarn/patches/nx-npm-17.3.0-canary.20240125-70fd808-4bf176f0e5.patch"
+  }
 }

@@ -1,0 +1,92 @@
+diff --git a/src/tasks-runner/forked-process-task-runner.js b/src/tasks-runner/forked-process-task-runner.js
+index 0e3e07777e83b8e02675510068c82d917f5800ed..c658974591afce3e2e59842bb088f661f53da941 100644
+--- a/src/tasks-runner/forked-process-task-runner.js
++++ b/src/tasks-runner/forked-process-task-runner.js
+@@ -41,6 +41,9 @@ class ForkedProcessTaskRunner {
+                 else {
+                     const args = (0, utils_1.getPrintableCommandArgsForTask)(Object.values(batchTaskGraph.tasks)[0]);
+                     output_1.output.logCommand(args.join(' '));
++                    if (process.env.GITHUB_ACTIONS) {
++                        process.stdout.write('::endgroup::');
++                    }
+                 }
+                 const p = (0, child_process_1.fork)(workerPath, {
+                     stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+@@ -272,7 +275,7 @@ class ForkedProcessTaskRunner {
+                         }
+                     }
+                     catch (e) {
+-                        console.log((0, strip_indents_1.stripIndents) `
++                        console.log((0, strip_indents_1.stripIndents)`
+               Unable to print terminal output for Task "${task.id}".
+               Task failed with Exit Code ${code} and Signal "${signal}".
+ 
+diff --git a/src/tasks-runner/life-cycles/dynamic-run-one-terminal-output-life-cycle.js b/src/tasks-runner/life-cycles/dynamic-run-one-terminal-output-life-cycle.js
+index 9c6a32a76a56f1ae08fd2bab28ad8e1b9c4bd5ab..c1d2cd39b85404d4c3f02b0f2c083986dd35a999 100644
+--- a/src/tasks-runner/life-cycles/dynamic-run-one-terminal-output-life-cycle.js
++++ b/src/tasks-runner/life-cycles/dynamic-run-one-terminal-output-life-cycle.js
+@@ -134,6 +134,9 @@ async function createRunOneDynamicOutputRenderer({ initiatingProject, tasks, arg
+         if (task.target.project === initiatingProject) {
+             output_1.output.logCommand(task.id, cacheStatus);
+             process.stdout.write(terminalOutput);
++            if (process.env.GITHUB_ACTIONS) {
++                process.stdout.write('::endgroup::');
++            }
+         }
+         else {
+             tasksToTerminalOutputs[task.id] = terminalOutput;
+@@ -164,6 +167,9 @@ async function createRunOneDynamicOutputRenderer({ initiatingProject, tasks, arg
+                         output_1.output.addVerticalSeparator('red');
+                         output_1.output.logCommand(t.task.id, t.status);
+                         process.stdout.write(tasksToTerminalOutputs[t.task.id]);
++                        if (process.env.GITHUB_ACTIONS) {
++                            process.stdout.write('::endgroup::');
++                        }
+                     }
+                     break;
+             }
+diff --git a/src/tasks-runner/life-cycles/static-run-many-terminal-output-life-cycle.js b/src/tasks-runner/life-cycles/static-run-many-terminal-output-life-cycle.js
+index 39693211e38803048f888f699b139c823eae5857..3b035cd37b99c2c7d229e351b823bb360e77ba5c 100644
+--- a/src/tasks-runner/life-cycles/static-run-many-terminal-output-life-cycle.js
++++ b/src/tasks-runner/life-cycles/static-run-many-terminal-output-life-cycle.js
+@@ -95,6 +95,9 @@ class StaticRunManyTerminalOutputLifeCycle {
+         const args = (0, utils_1.getPrintableCommandArgsForTask)(task);
+         output_1.output.logCommand(args.join(' '), cacheStatus);
+         process.stdout.write(terminalOutput);
++        if (process.env.GITHUB_ACTIONS) {
++            process.stdout.write('::endgroup::');
++        }
+     }
+ }
+ exports.StaticRunManyTerminalOutputLifeCycle = StaticRunManyTerminalOutputLifeCycle;
+diff --git a/src/tasks-runner/life-cycles/static-run-one-terminal-output-life-cycle.js b/src/tasks-runner/life-cycles/static-run-one-terminal-output-life-cycle.js
+index cffb7973a209d38a43d89b60df19ee12446fbcb9..22a8d3bad926c22e98ec835bb465fe09f6c5f435 100644
+--- a/src/tasks-runner/life-cycles/static-run-one-terminal-output-life-cycle.js
++++ b/src/tasks-runner/life-cycles/static-run-one-terminal-output-life-cycle.js
+@@ -84,6 +84,9 @@ class StaticRunOneTerminalOutputLifeCycle {
+             const args = (0, utils_1.getPrintableCommandArgsForTask)(task);
+             output_1.output.logCommand(args.join(' '), status);
+             process.stdout.write(terminalOutput);
++            if (process.env.GITHUB_ACTIONS) {
++                process.stdout.write('::endgroup::');
++            }
+         }
+     }
+ }
+diff --git a/src/utils/output.js b/src/utils/output.js
+index 4c3dd6d429357044f6b5ef1aa1372abaa4dd3d9f..91c76f6dfd8eb8b5e1ae04aac83f16b013f004dd 100644
+--- a/src/utils/output.js
++++ b/src/utils/output.js
+@@ -153,7 +153,11 @@ class CLIOutput {
+     logCommand(message, taskStatus) {
+         this.addNewline();
+         const commandOutput = chalk.dim('> ') + this.formatCommand(this.normalizeMessage(message));
+-        const commandOutputWithStatus = this.addTaskStatus(taskStatus, commandOutput);
++        let commandOutputWithStatus = this.addTaskStatus(taskStatus, commandOutput);
++        if (process.env.GITHUB_ACTIONS) {
++            const icon = taskStatus === 'skipped' ? '⏭️' : taskStatus === 'failure' ? '❌' : '✅';
++            commandOutputWithStatus = `::group::${icon} ${commandOutputWithStatus}`;
++        }
+         this.writeToStdOut(commandOutputWithStatus);
+         this.addNewline();
+         this.addNewline();
